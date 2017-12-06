@@ -27,6 +27,7 @@
  * @subpackage Ml_provisioning/includes
  * @author     Michael Dyer <devteam@nlsltd.com>
  */
+
 class Ml_provisioning {
 
 	/**
@@ -178,6 +179,7 @@ class Ml_provisioning {
 		$this->loader->add_filter( 'woocommerce_account_menu_items', $plugin_public, 'account_menu_items' );
 		$this->loader->add_action( 'woocommerce_after_order_notes', $plugin_public, 'add_provisioning_checkbox' );
 		$this->loader->add_action( 'woocommerce_checkout_create_order', $plugin_public, 'checkout_create_order' );
+		$this->loader->add_action( 'woocommerce_thankyou', $plugin_public, 'get_user_data' );
 	}
 
 	/**

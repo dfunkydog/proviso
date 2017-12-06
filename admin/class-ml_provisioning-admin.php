@@ -20,6 +20,7 @@
  * @subpackage Ml_provisioning/admin
  * @author     Michael Dyer <devteam@nlsltd.com>
  */
+
 class Ml_provisioning_Admin {
 
 	/**
@@ -146,6 +147,14 @@ class Ml_provisioning_Admin {
 			'provisioning',
 			'ml__provisioning_section'
 		);
+
+		add_settings_field(
+			'source',
+			__( 'Source', 'me_learning' ),
+			array($this,'source_render'),
+			'provisioning',
+			'ml__provisioning_section'
+		);
 	}
 
 
@@ -171,6 +180,14 @@ class Ml_provisioning_Admin {
 		$options = get_option( 'ml__settings' );
 		?>
 		<input type='text' name='ml__settings[subdomain]' value='<?php echo $options['subdomain']; ?>'>
+		<?php
+	}
+
+	function source_render()
+	{
+		$options = get_option( 'ml__settings' );
+		?>
+		<input type='text' name='ml__settings[source]' value='<?php echo $options['source']; ?>'>
 		<?php
 	}
 

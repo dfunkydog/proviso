@@ -20,6 +20,7 @@
  * @subpackage Ml_provisioning/public
  * @author     Michael Dyer <devteam@nlsltd.com>
  */
+
 class Ml_provisioning_Public {
 
 	/**
@@ -166,41 +167,41 @@ class Ml_provisioning_Public {
 	}
 
 	/**
-	 * Get Api credentials
+	 * CHeck User data
+	 * TODO : Change name
 	 */
-	function get_credentials()
+	function get_user_data($echo = true)
 	{
-		$credentials = array(
-			options['ml__api_key'],
-			options['ml__api_key'],
-		);
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/includes/class-ml_provisioning-requests.php';
 
-		return $credentials;
+		$raw_data = new Ml_provisioning_Requests;
+		$user_data = $raw_data->get_movies();
+		//Does wordpress account exists in licensing hub?
+		if($user_data['original_title'] === 'Fight Club'){
+			//yes ->
+			$this->hub_add_courses(); //TODO
+		} else {
+			$this->hub_create_account(); //TODO
+		}
 	}
 
-	public function api_request($call, $atts, $creds){
-		$url = "https://api.trustpilot.com/v1/business-units/53fc9bcc000064000579f13b/reviews?apikey={$api_key}&tagValue={$tag}";
-		//  Initiate curl
-		$ch = curl_init();
-		// Disable SSL verification
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		// Will return the response, if false it print the response
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		// Set the url
-		curl_setopt($ch, CURLOPT_URL,$url);
-		// Execute
-		$result=curl_exec($ch);
-		if(curl_errno($ch)){
-			throw new Exception(curl_error($ch));
-		}
-		// Closing
-		curl_close($ch);
-		$results = json_decode($result, true);
-		if( isset($results['fault']) && $results['fault'] ){
-			throw new Exception($results['fault']['faultstring']);
-		}
-		set_transient('nls_trustpilot_reviews_'.$tag, $results['reviews'], 86400);
-		return $results['reviews'];
+	/**
+	 * Create hub account from wordpress credentials
+	 */
+	private function hub_create_account(){
+		// TODO create hub account
+
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/includes/class-ml_provisioning-create-account.php';
 	}
+
+	/**
+	 * Add recently purchases courses to licensing hub
+	 */
+	private function hub_add_courses(){
+		// TODO create hub account
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/includes/class-ml_provisioning-add-courses.php';
+	}
+
+
 
 }
