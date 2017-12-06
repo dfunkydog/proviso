@@ -47,7 +47,8 @@ class Ml_provisioning_Public {
 	 * @param      string    $plugin_name       The name of the plugin.
 	 * @param      string    $version    The version of this plugin.
 	 */
-	public function __construct( $plugin_name, $version ) {
+	public function __construct( $plugin_name, $version )
+	{
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
@@ -58,7 +59,8 @@ class Ml_provisioning_Public {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_styles() {
+	public function enqueue_styles()
+	{
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -81,7 +83,8 @@ class Ml_provisioning_Public {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_scripts() {
+	public function enqueue_scripts()
+	{
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -104,17 +107,100 @@ class Ml_provisioning_Public {
 	}
 
 	/**
-	 * Information content
+	 * Display license management page content
 	 */
-	public function licenses_endpoint_content() {
-		echo 'Your new content';
+	public function licenses_endpoint_content()
+	{
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_license_management.php';
 	}
 
-	public function account_menu_items($items){
-		$items['licenses'] = 'Licenses';
-		return $items;
+	public function account_menu_items($items)
+	{
+
+		$orders = $items['orders'];
+		$edit_address = $items['edit-address'];
+		$edit_account = $items['edit-account'];
+
+		$new_items_order = array(
+			$orders,
+			$edit_account,
+			$edit_address,
+			'payment-methods'    => __( 'Payment Methods', 'woocommerce' ),
+			'licenses'    => __( 'licenses', 'woocommerce' )
+		);
+		return $new_items_order;
 	}
 
+	/**
+	 * Add provisioning field to checkout
+	 */
+	public function add_provisioning_checkbox( $checkout )
+	{
+		$allocate_items = false;
+		foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+			if ($cart_item['quantity'] > 1){
+				$allocate_items = true;
+				break;
+			}
+		}
+		echo '<div id="ml_provisioning_field">';
+			woocommerce_form_field( 'ml_provisioning_check', array(
+				'type'          => 'checkbox',
+				'class'         => 'provisioning',
+				'id'         => 'ml-provisioning-check',
+				'label'         => __('These courses are for:<br><span>Myself</span><span>Other People</span>'),
+				'checked'         => 'checked',
+				'default'         => $allocate_items,
+				), $checkout->get_value( 'ml_provisioning_check' ));
+		echo '</div>';
+	}
 
+	/**
+	 * update order meta data from provisioning fields
+	 */
+	public function checkout_create_order( $order )
+	{
+		$val = isset($_POST['ml_provisioning_check']) ? $_POST['ml_provisioning_check'] : false;
+		$order->update_meta_data('allocate', $val );
+		return $order;
+	}
+
+	/**
+	 * Get Api credentials
+	 */
+	function get_credentials()
+	{
+		$credentials = array(
+			options['ml__api_key'],
+			options['ml__api_key'],
+		);
+
+		return $credentials;
+	}
+
+	public function api_request($call, $atts, $creds){
+		$url = "https://api.trustpilot.com/v1/business-units/53fc9bcc000064000579f13b/reviews?apikey={$api_key}&tagValue={$tag}";
+		//  Initiate curl
+		$ch = curl_init();
+		// Disable SSL verification
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		// Will return the response, if false it print the response
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		// Set the url
+		curl_setopt($ch, CURLOPT_URL,$url);
+		// Execute
+		$result=curl_exec($ch);
+		if(curl_errno($ch)){
+			throw new Exception(curl_error($ch));
+		}
+		// Closing
+		curl_close($ch);
+		$results = json_decode($result, true);
+		if( isset($results['fault']) && $results['fault'] ){
+			throw new Exception($results['fault']['faultstring']);
+		}
+		set_transient('nls_trustpilot_reviews_'.$tag, $results['reviews'], 86400);
+		return $results['reviews'];
+	}
 
 }

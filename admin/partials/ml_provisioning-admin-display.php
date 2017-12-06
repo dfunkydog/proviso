@@ -14,3 +14,15 @@
 ?>
 
 <!-- This file should primarily consist of HTML with a little bit of PHP. -->
+
+<form action='options.php' method='post'>
+
+    <h2>Provisioning Options</h2>
+
+    <?php
+    settings_fields( 'provisioning' );
+    do_settings_sections( 'provisioning' );
+    submit_button();
+    ?>
+
+</form>

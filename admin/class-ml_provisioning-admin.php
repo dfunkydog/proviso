@@ -100,4 +100,91 @@ class Ml_provisioning_Admin {
 
 	}
 
+	/**
+	 *  Adds an options menu item in dashboard->settings
+	 */
+	public function ml__add_admin_menu()
+	{
+
+		add_options_page( 'Provisioning Options', 'Provisioning Options', 'manage_options', 'ml_provisioning', array($this, 'ml__options_page') );
+	}
+
+	/**
+	 * Set up admin option fields & sections
+	 */
+	public function ml__settings_init()
+	{
+		register_setting( 'provisioning', 'ml__settings' );
+
+		add_settings_section(
+			'ml__provisioning_section',
+			__( 'Your section description', 'me_learning' ),
+			array($this, 'ml__settings_section_callback'),
+			'provisioning'
+		);
+
+		add_settings_field(
+			'ml__api_key',
+			__( 'Api Key', 'me_learning' ),
+			array($this, 'ml__api_key_render'),
+			'provisioning',
+			'ml__provisioning_section'
+		);
+
+		add_settings_field(
+			'ml__api_secret',
+			__( 'Api secret', 'me_learning' ),
+			array($this,'ml__api_secret_render'),
+			'provisioning',
+			'ml__provisioning_section'
+		);
+
+		add_settings_field(
+			'subdomain',
+			__( 'Subdomain', 'me_learning' ),
+			array($this,'subdomain_render'),
+			'provisioning',
+			'ml__provisioning_section'
+		);
+	}
+
+
+	function ml__api_key_render()
+	{
+		$options = get_option( 'ml__settings' );
+		?>
+		<input type='text' name='ml__settings[ml__api_key]' value='<?php echo $options['ml__api_key']; ?>'>
+		<?php
+	}
+
+
+	function ml__api_secret_render()
+	{
+		$options = get_option( 'ml__settings' );
+		?>
+		<input type='text' name='ml__settings[ml__api_secret]' value='<?php echo $options['ml__api_secret']; ?>'>
+		<?php
+	}
+
+	function subdomain_render()
+	{
+		$options = get_option( 'ml__settings' );
+		?>
+		<input type='text' name='ml__settings[subdomain]' value='<?php echo $options['subdomain']; ?>'>
+		<?php
+	}
+
+
+	function ml__settings_section_callback(  )
+	{
+		echo __( 'This section description', 'me_learning' );
+	}
+
+
+	function ml__options_page(  )
+	{
+		//TODO : Use autoloader
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/ml_provisioning-admin-display.php';
+	}
+
 }

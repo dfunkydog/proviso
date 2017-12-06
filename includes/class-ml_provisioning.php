@@ -156,7 +156,8 @@ class Ml_provisioning {
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
-
+		$this->loader->add_action('admin_init', $plugin_admin, 'ml__settings_init');
+		$this->loader->add_action('admin_menu', $plugin_admin, 'ml__add_admin_menu');
 	}
 
 	/**
@@ -175,7 +176,8 @@ class Ml_provisioning {
 		$this->loader->add_action( 'init', $plugin_public, 'rewrite_endpoints' );
 		$this->loader->add_action( 'woocommerce_account_licenses_endpoint', $plugin_public, 'licenses_endpoint_content' );
 		$this->loader->add_filter( 'woocommerce_account_menu_items', $plugin_public, 'account_menu_items' );
-
+		$this->loader->add_action( 'woocommerce_after_order_notes', $plugin_public, 'add_provisioning_checkbox' );
+		$this->loader->add_action( 'woocommerce_checkout_create_order', $plugin_public, 'checkout_create_order' );
 	}
 
 	/**
