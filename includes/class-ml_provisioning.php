@@ -123,6 +123,11 @@ class Ml_provisioning {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-ml_provisioning-public.php';
 
+		/**
+		 * The class responsible for public AJAX functionality.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-ml_provisioning-ajax.php';
+
 		$this->loader = new Ml_provisioning_Loader();
 
 	}
@@ -170,16 +175,28 @@ class Ml_provisioning {
 	 */
 	private function define_public_hooks() {
 
+		/**
+		 * Public
+		 */
 		$plugin_public = new Ml_provisioning_Public( $this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 		$this->loader->add_action( 'init', $plugin_public, 'rewrite_endpoints' );
-		$this->loader->add_action( 'woocommerce_account_licenses_endpoint', $plugin_public, 'licenses_endpoint_content' );
-		$this->loader->add_filter( 'woocommerce_account_menu_items', $plugin_public, 'account_menu_items' );
+		$this->loader->add_action( 'woocommerce_account_licences_endpoint', $plugin_public, 'licences_endpoint_content' );
 		$this->loader->add_action( 'woocommerce_after_order_notes', $plugin_public, 'add_provisioning_checkbox' );
 		$this->loader->add_action( 'woocommerce_checkout_create_order', $plugin_public, 'checkout_create_order' );
-		$this->loader->add_action( 'woocommerce_thankyou', $plugin_public, 'get_user_data' );
+		$this->loader->add_action( 'woocommerce_thankyou', $plugin_public, 'post_checkout_provisioning' );
+		$this->loader->add_filter( 'woocommerce_account_menu_items', $plugin_public, 'account_menu_items' );
+		$this->loader->add_shortcode( 'ml_povisioning_validate_to_link', $plugin_public, 'ml_povisioning_validate_to_link' );
+
+		/**
+		 * AJAX
+		 */
+		$plugin_ajax = new Ml_provisioning_Ajax( $this->get_plugin_name(), $this->get_version() );
+
+		$this->loader->add_action( 'wp_ajax_process_forms', $plugin_ajax, 'process_forms' );
+		$this->loader->add_action( 'wp_ajax_nopriv_process_forms', $plugin_ajax, 'process_forms' );
 	}
 
 	/**

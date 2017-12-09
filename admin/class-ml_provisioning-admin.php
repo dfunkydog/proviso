@@ -133,25 +133,33 @@ class Ml_provisioning_Admin {
 		);
 
 		add_settings_field(
-			'ml__api_secret',
-			__( 'Api secret', 'me_learning' ),
-			array($this,'ml__api_secret_render'),
+			'ml__subdomain_api_key',
+			__( 'Subdomain Api Key', 'me_learning' ),
+			array($this,'ml__subdomain_api_key_render'),
 			'provisioning',
 			'ml__provisioning_section'
 		);
 
 		add_settings_field(
-			'subdomain',
-			__( 'Subdomain', 'me_learning' ),
-			array($this,'subdomain_render'),
+			'ml__api_base_url',
+			__( 'Api Base url', 'me_learning' ),
+			array($this,'ml__api_base_url_render'),
 			'provisioning',
 			'ml__provisioning_section'
 		);
 
 		add_settings_field(
-			'source',
+			'ml__api_subdomain',
+			__( 'Training Subdomain', 'me_learning' ),
+			array($this,'ml__api_subdomain_render'),
+			'provisioning',
+			'ml__provisioning_section'
+		);
+
+		add_settings_field(
+			'ml__api_source',
 			__( 'Source', 'me_learning' ),
-			array($this,'source_render'),
+			array($this,'ml__api_source_render'),
 			'provisioning',
 			'ml__provisioning_section'
 		);
@@ -167,27 +175,36 @@ class Ml_provisioning_Admin {
 	}
 
 
-	function ml__api_secret_render()
+	function ml__subdomain_api_key_render()
 	{
 		$options = get_option( 'ml__settings' );
 		?>
-		<input type='text' name='ml__settings[ml__api_secret]' value='<?php echo $options['ml__api_secret']; ?>'>
+		<input type='text' name='ml__settings[ml__subdomain_api_key]' value='<?php echo $options['ml__subdomain_api_key']; ?>'>
 		<?php
 	}
 
-	function subdomain_render()
+
+	function ml__api_base_url_render()
 	{
 		$options = get_option( 'ml__settings' );
 		?>
-		<input type='text' name='ml__settings[subdomain]' value='<?php echo $options['subdomain']; ?>'>
+		<input type='text' name='ml__settings[ml__api_base_url]' value='<?php echo $options['ml__api_base_url']; ?>'>
 		<?php
 	}
 
-	function source_render()
+	function ml__api_subdomain_render()
 	{
 		$options = get_option( 'ml__settings' );
 		?>
-		<input type='text' name='ml__settings[source]' value='<?php echo $options['source']; ?>'>
+		<input type='text' name='ml__settings[ml__api_subdomain]' value='<?php echo $options['ml__api_subdomain']; ?>'>
+		<?php
+	}
+
+	function ml__api_source_render()
+	{
+		$options = get_option( 'ml__settings' );
+		?>
+		<input type='text' name='ml__settings[ml__api_source]' value='<?php echo $options['ml__api_source']; ?>'>
 		<?php
 	}
 

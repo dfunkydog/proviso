@@ -19,8 +19,8 @@
  * Version:           1.0.0
  * Author:            Michael Dyer
  * Author URI:        nlsltd.com
- * License:           GPL-2.0+
- * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ * Licence:           GPL-2.0+
+ * Licence URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       ml_provisioning
  * Domain Path:       /languages
  */

@@ -10,6 +10,11 @@
  * @subpackage Ml_provisioning/public
  */
 
+
+
+require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/includes/class-ml_provisioning-requests.php';
+
+
 /**
  * The public-facing functionality of the plugin.
  *
@@ -20,8 +25,9 @@
  * @subpackage Ml_provisioning/public
  * @author     Michael Dyer <devteam@nlsltd.com>
  */
-
 class Ml_provisioning_Public {
+
+	private $make_request;
 
 	/**
 	 * The ID of this plugin.
@@ -53,6 +59,7 @@ class Ml_provisioning_Public {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
+		$this->make_request = new Ml_provisioning_Requests;
 	}
 
 	/**
@@ -100,19 +107,24 @@ class Ml_provisioning_Public {
 		 */
 
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ml_provisioning-public.js', array( 'jquery' ), $this->version, false );
+		wp_localize_script($this->plugin_name, 'proviso', array(
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'nonce' => wp_create_nonce( $this->plugin_name )
+	));
 
 	}
 
 	public function rewrite_endpoints(){
-		add_rewrite_endpoint('licenses', EP_PAGES);
+		add_rewrite_endpoint('licences', EP_PAGES);
 	}
 
 	/**
-	 * Display license management page content
+	 * Display licence management page content
 	 */
-	public function licenses_endpoint_content()
+	public function licences_endpoint_content()
 	{
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_license_management.php';
+		$this->get_licenses();
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_licence_management.php';
 	}
 
 	public function account_menu_items($items)
@@ -127,7 +139,7 @@ class Ml_provisioning_Public {
 			$edit_account,
 			$edit_address,
 			'payment-methods'    => __( 'Payment Methods', 'woocommerce' ),
-			'licenses'    => __( 'licenses', 'woocommerce' )
+			'licences'    => __( 'licences', 'woocommerce' )
 		);
 		return $new_items_order;
 	}
@@ -167,41 +179,73 @@ class Ml_provisioning_Public {
 	}
 
 	/**
-	 * CHeck User data
-	 * TODO : Change name
+	 * Get User data
+	 * @param integer $order_id Order id of current provisioning flow
 	 */
-	function get_user_data($echo = true)
+	function post_checkout_provisioning($order_id)
 	{
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/includes/class-ml_provisioning-requests.php';
-
-		$raw_data = new Ml_provisioning_Requests;
-		$user_data = $raw_data->get_movies();
-		//Does wordpress account exists in licensing hub?
-		if($user_data['original_title'] === 'Fight Club'){
-			//yes ->
-			$this->hub_add_courses(); //TODO
+		$user_data = $this->make_request->hub_get_user();
+		if( $user_data ){
+			//yes : Add orders items to licensing hub as unassigned
+			$this->hub_add_licences($user_data->id, $order_id);
 		} else {
-			$this->hub_create_account(); //TODO
+			//User does not exist so create licensing hub user
+			$this->hub_create_user();
 		}
 	}
 
 	/**
 	 * Create hub account from wordpress credentials
+	 * @param integer Woocommerce order ID
 	 */
-	private function hub_create_account(){
-		// TODO create hub account
-
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/includes/class-ml_provisioning-create-account.php';
+	private function hub_create_user()
+	{
+		$new_hub_user = $this->make_request->hub_create_user();
+		if( $new_hub_user ){
+			// Successful: Add products to hub under hub user's account as unassigned
+			// add licence uhb id to wordpres user meta
+			//update_user_meta( $user_id, $meta_key, $meta_value, $prev_value );
+			$this->make_request->hub_add_licences($new_hub_user->id, $order_id);
+		} else {
+			// Failed: Handle error
+			$this->error_handler($new_hub_user);
+		}
 	}
 
 	/**
 	 * Add recently purchases courses to licensing hub
+	 * @param string $user_id The user id from licensing hub
+	 * @param string $order_id The woocommerce order id
 	 */
-	private function hub_add_courses(){
-		// TODO create hub account
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/includes/class-ml_provisioning-add-courses.php';
+	private function hub_add_licences($user_id, $order_id)
+	{
+		$added_products = $this->make_request->hub_add_licences($user_id, $order_id);
+		//success
+		$this->link_lms_account();
+		// TODO If any of the product licenses Fail : Handle failure
+	}
+
+	/**
+	 * Kickstarts process of linking wordpress user email to lms account
+	 */
+	public function link_lms_account()
+	{
+		if( $this->make_request->hub_is_account_linked() ){
+			echo " E";
+		} else {
+			if( $this->make_request->subdomain_contains_wp_email() ) {
+				$this->show_lms_login_form();
+			}
+		}
 	}
 
 
+	public function show_lms_login_form(){
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_validate-to-link.php';
+	}
+	public function ml_povisioning_validate_to_link(){
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_validate-to-link.php';
+
+	}
 
 }

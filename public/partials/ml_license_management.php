@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Provide a public-facing view for user license management page
+ * Provide a public-facing view for user licence management page
  *
- * This file is used to markup the public-facing aspects of user license management page.
+ * This file is used to markup the public-facing aspects of user licence management page.
  *
  * @link       nlsltd.com
  * @since      1.0.0
@@ -19,31 +19,31 @@
 	<table class="woocommerce-MyAccount-orders shop_table shop_table_responsive my_account_orders account-orders-table">
 	  <thead>
 		<tr>
-			<th class="license-order-number">
+			<th class="licence-order-number">
 				<span class="nobr">Order</span>
 			</th>
-			<th class="license-course">
+			<th class="licence-course">
 				<span class="nobr">Course</span>
 			</th>
-			<th class="license-asssignment">
+			<th class="licence-asssignment">
 				<span class="nobr">Assigned to</span>
 			</th>
-			<th class="license-status">
+			<th class="licence-status">
 				<span class="nobr">Status</span>
 			</th>
-			<th class="license-actions">
+			<th class="licence-actions">
 				<span class="nobr">Actions</span>
 			</th>
 		  </tr>
 	  </thead>
 
 	  <tbody>
-		<tr class="license">
-		  <td class="license-order-number" data-title="license">101</td>
-		  <td class="license-course" data-course="Date">Food hygene and safety</td>
-		  <td class="license-assignment" data-title="Status">scott.eager@foo.bar</td>
-		  <td class="license-status" data-title="Total">Unassigned</td>
-		  <td class="license-actions" data-title="Actions"><a href="#" class="ml-button button -small">View course</a></td>
+		<tr class="licence">
+		  <td class="licence-order-number" data-title="licence">101</td>
+		  <td class="licence-course" data-course="Date">Food hygene and safety</td>
+		  <td class="licence-assignment" data-title="Status">scott.eager@foo.bar</td>
+		  <td class="licence-status" data-title="Total">Unassigned</td>
+		  <td class="licence-actions" data-title="Actions"><a href="#" class="ml-button button -small">View course</a></td>
 		</tr>
 	  </tbody>
 	</table>
