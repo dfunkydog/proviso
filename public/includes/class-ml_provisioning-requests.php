@@ -57,6 +57,10 @@ class Ml_provisioning_Requests {
 				$ml_license_hub_id = get_user_meta( $wp_user->ID, 'ml_license_hub_id' );
 				return $ml_license_hub_id[0];
 				break;
+			case 'lmsuserid':
+				$ml_license_hub_id = get_user_meta( $wp_user->ID, 'ml_license_subdomain_id' );
+				return $ml_license_hub_id[0];
+				break;
 
 			default:
 				return null;
@@ -64,11 +68,31 @@ class Ml_provisioning_Requests {
 		}
 	}
 
-	private function set_user_meta($value)
+	/**
+	 * Add a Key, Value pair to wp user's meta.
+	 * @param string $arg
+	 *
+	 * @return boolean >
+	 */
+	private function set_user_meta($key, $value)
 	{
-		if(get_user_meta($this->get_user('id'), 'ml_license_hub_id') !== $value){
-			update_user_meta( $this->get_user('id'), 'ml_license_hub_id', $value );
+		switch ($key) {
+			case 'licenceuserid':
+				if(get_user_meta($this->get_user('id'), 'ml_license_hub_id') !== $value){
+					return update_user_meta( $this->get_user('id'), 'ml_license_hub_id', $value );
+				} else {
+					return false;
+				}
+			case 'lmsuserid':
+				if(get_user_meta($this->get_user('id'), 'ml_license_subdomain_id') !== $value){
+					return update_user_meta( $this->get_user('id'), 'ml_license_subdomain_id', $value );
+				} else {
+					return false;
+				}
+			default:
+				return false;
 		}
+
 	}
 
 	private function do_request($args)
@@ -132,7 +156,7 @@ class Ml_provisioning_Requests {
 			return false;
 		} else {
 			// add licence hub id to wordpres user meta
-			$this->set_user_meta($raw_data->hubuser[0]->id);
+			$this->set_user_meta('licenceuserid', $raw_data->hubuser[0]->id);
 			return $raw_data->hubuser[0];
 		}
 	}
@@ -201,35 +225,16 @@ class Ml_provisioning_Requests {
 	}
 
 	/**
-	 * Get user details from training subdomain
-	 */
-	public function subdomain_get_user()
-	{
-		$query = http_build_query([
-			'search' => $this->get_user('email')
-		]);
-		$raw_data = $this->do_request(
-			array(
-				'endpoint' => 'User/getUserDetails',
-				'query' => $query,
-				'subdomain' => true
-			)
-		);
-		return $raw_data->user === null ? false : true;
-	}
-
-	/**
 	 * Validate user account with one-time authentication into the
 	 * LMS from the username and password of a user account
 	 */
 	public function subdomain_validate_user_account($name, $pass)
 	{
-		$user_name = isset($name) ?: $false;
-		$user_pass = isset($pass) ?: $false;
+		return '4JXQOON7Y5C4X3R75U0E';
+		$user_name = isset($name) ? $name : $false;
+		$user_pass = isset($pass) ? $pass : $false;
 		if(!$user_name || !$user_pass){
-			return json_encode(array(
-				error
-			));
+			return ['error', 'message' => 'Sorry! There was an error. Our admins boffins have been notified'];
 		}
 		$query = http_build_query([
 			'username' => $user_name,
@@ -242,8 +247,8 @@ class Ml_provisioning_Requests {
 				'subdomain' => true
 			)
 		);
-
-		return $raw_data; // Do something with the raw data
+		// The data currently returned is not json notify ML devs
+		// return $raw_data;
 	}
 
 	/**
@@ -259,32 +264,6 @@ class Ml_provisioning_Requests {
 			'username' => $user_name,
 			'password' => $user_pass
 		]);
-		$raw_data = $this->do_request(
-			array(
-				'endpoint' => 'User/createUser',
-				'query' => $query,
-				'subdomain' => true,
-				'request' => 'POST'
-			)
-		);
-		return; // Do something with the raw data
-	}
-
-	/**
-	 * Link LMS account with wordpress account
-	 */
-	public function subdomain_link_accounts()
-	{
-
-		$user_name = false;
-		$user_pass = false;
-		$firstname =
-		$query = http_build_query(
-			array(
-				'username' => $user_name,
-				'password' => $user_pass
-			)
-		);
 		$raw_data = $this->do_request(
 			array(
 				'endpoint' => 'User/createUser',
@@ -320,6 +299,31 @@ class Ml_provisioning_Requests {
 	}
 
 	/**
+	 * Link Wordpress and Blue LMS accounts
+	 *
+	 * @return boolean
+	 */
+	public function link_user_accounts()
+	{
+		$options = get_option( 'ml__settings' );
+		$query = http_build_query(
+			array(
+				'subdomain' => $options['ml__api_subdomain'],
+				'licenceuserid' => $this->get_user('licenceuserid'),
+				'lmsuserid' => $this->get_user('lmsuserid')
+			)
+		);
+		$raw_data = $this->do_request(
+			array(
+				'endpoint' => 'Licensing/addLinkedAccount',
+				'query' => $query,
+				'request' => 'POST',
+			)
+		);
+		return empty($raw_data->linkeduser) ? false : true;
+	}
+
+	/**
 	 * Check if wordpress email is in LMS training
 	 *
 	 * @return boolean
@@ -339,6 +343,8 @@ class Ml_provisioning_Requests {
 				'subdomain' => true
 			)
 		);
+		// If is single add subdomain id to wp user meta
+		$this->set_user_meta(lmsuserid, $raw_data->user->id);
 		return empty($raw_data->user) ? false : true;
 	}
 	/**

@@ -36,6 +36,8 @@
 			success : function( response, textStatus, XMLHttpRequest ) {
 				if(response.content.state === 'error'){
 					$form.find('[data-error]').text(response.content.message).show();
+				} else if(response.content.state === 'account_linked') {
+					$form.find('[data-feedback]').text(response.content).show();
 				} else {
 					$form.find('[data-feedback]').text(response.content).show();
 				}

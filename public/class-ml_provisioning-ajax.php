@@ -25,6 +25,7 @@
 			$this->plugin_name = $plugin_name;
 			$this->version = $version;
 			$this->make_request = new Ml_provisioning_Requests;
+			$this->response = array();
 		}
 
 		/**
@@ -40,22 +41,7 @@
 				die( 'Permission Denied' );
 			}
 
-			$feedback = $this->process_form($_POST['callback']);
-			// Define an empty response array.
-			if($feedback->error || $feedback === null || $feedback[0] == 'error'){
-				$response = array(
-					'status'  => 200,
-					'content' => array(
-						'state' => 'error',
-						'message' => $feedback[message] ?:'There was an error, please try again'
-					)
-				);
-			} else {
-				//link accounts
-			}
-
-			// Terminate the callback and return a proper response.
-			wp_die( json_encode( $response ) );
+			$this->process_form($_POST['callback']);
 
 		}
 
@@ -82,12 +68,34 @@
 			$user_name = (isset($_POST['username']) && $_POST['username'] !== '') ?: false;
 			$user_pass = (isset($_POST['password']) && $_POST['password'] !== '') ?: false;
 			if(!$user_name || !$user_pass){
-				return ['error', 'message' => 'Username or Password missing'];
+				$this->response =  ['error', 'message' => 'Username or Password missing'];
+				$this->feedback();
 			} else {
-				return $this->make_request->subdomain_validate_user_account($_POST['username'], $_POST['password']);
+				$account_validated =  $this->make_request->subdomain_validate_user_account($_POST['username'], $_POST['password']);
+				if(true == $account_validated){
+					$this->link_validated_account();
+				}
 			}
 		}
+		/**
+		 * Link validate user accounts
+		 */
+		function link_validated_account()
+		{
+			if($this->make_request->link_user_accounts() ) {
+				$this->response = array(
+					'status'  => 200,
+					'content' => array(
+						'state' => 'account_linked',
+					)
+				);
+			}
+			$this->feedback();
+		}
 
+		function feedback(){
+			wp_die( json_encode($this->response) );
+		}
 	}
 
 }

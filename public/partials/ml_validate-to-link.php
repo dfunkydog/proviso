@@ -1,5 +1,5 @@
 <?php
-// Displays form to validate before lnking accounts
+// Displays form to validate before linking accounts
   ob_start;
   ?>
 
