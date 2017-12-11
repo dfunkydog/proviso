@@ -123,7 +123,11 @@ class Ml_provisioning_Public {
 	 */
 	public function licences_endpoint_content()
 	{
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_license_management.php';
+		if($this->make_request->hub_is_account_linked()){
+			require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_license_management.php';
+		} else {
+			echo "<h2>Link accounts before showing licenes</h2>";
+		}
 	}
 
 	public function account_menu_items($items)
@@ -233,7 +237,12 @@ class Ml_provisioning_Public {
 			echo " E";
 		} else {
 			if( $this->make_request->subdomain_contains_wp_email() ) {
-				$this->ml_provisioning_validate_to_link();
+				wp_redirect('/link-accounts');
+				exit;
+				// $this->ml_provisioning_validate_to_link();
+			} else {
+				//create new LMS user
+				if( $this->make_request->subdomain_create_user_account() );
 			}
 		}
 	}
@@ -243,13 +252,17 @@ class Ml_provisioning_Public {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_validate-to-link.php';
 	}
 
+	/**
+	 * Returns [ml_provisioning_thankyou_cta] shortcode content
+	 */
 	public function ml_provisioning_thankyou_cta($atts)
 	{
 		$licenses_url = get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'licences';
 		if('' !== wc_get_order($atts['order'])->get_meta('allocate')) {
 			return  "<a href={$licenses_url} class='button -lime'>Login to training</a>";
 		} else {
-			return "<a href={$licenses_url} class='button -lime'>Manage Licenses</a>";}
+			return "<a href={$licenses_url} class='button -lime'>Manage Licenses</a>";
+		}
 	}
 
 }

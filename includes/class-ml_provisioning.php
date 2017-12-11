@@ -127,6 +127,15 @@ class Ml_provisioning {
 		 * The class responsible for public AJAX functionality.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-ml_provisioning-ajax.php';
+		/**
+		 * The class responsible for public Licence management page functionality.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-ml_provisioning-licensing.php';
+
+		/**
+		 * The class responsible for organisation details functionality.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-ml_provisioning-organisation.php';
 
 		$this->loader = new Ml_provisioning_Loader();
 
@@ -183,13 +192,23 @@ class Ml_provisioning {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 		$this->loader->add_action( 'init', $plugin_public, 'rewrite_endpoints' );
-		$this->loader->add_action( 'woocommerce_account_licences_endpoint', $plugin_public, 'licences_endpoint_content' );
 		$this->loader->add_action( 'woocommerce_after_order_notes', $plugin_public, 'add_provisioning_checkbox' );
 		$this->loader->add_action( 'woocommerce_checkout_create_order', $plugin_public, 'checkout_create_order' );
 		$this->loader->add_action( 'woocommerce_thankyou', $plugin_public, 'post_checkout_provisioning' );
 		$this->loader->add_filter( 'woocommerce_account_menu_items', $plugin_public, 'account_menu_items' );
+
+		/**
+		 * Shortcodes
+		 */
 		$this->loader->add_shortcode( 'ml_provisioning_validate_account', $plugin_public, 'ml_provisioning_validate_to_link' );
+		$this->loader->add_shortcode( 'ml_provisioning_lms_signup', $plugin_public, 'ml_provisioning_lms_signup' );
 		$this->loader->add_shortcode( 'ml_provisioning_thankyou_cta', $plugin_public, 'ml_provisioning_thankyou_cta' );
+
+		/**
+		 *  Organistaion details
+		 */
+		$plugin_organisation = new Ml_provisioning_Organisation( $this->get_plugin_name(), $this->get_version() );
+		$this->loader->add_shortcode( 'ml_organisation_details', $plugin_organisation, 'ml_organisation_details' );
 
 		/**
 		 * AJAX
@@ -198,6 +217,12 @@ class Ml_provisioning {
 
 		$this->loader->add_action( 'wp_ajax_process_forms', $plugin_ajax, 'process_forms' );
 		$this->loader->add_action( 'wp_ajax_nopriv_process_forms', $plugin_ajax, 'process_forms' );
+
+		/**
+		 * License management
+		 */
+		$plugin_licensing = new Ml_provisioning_Licensing( $this->get_plugin_name(), $this->get_version() );
+		$this->loader->add_action( 'woocommerce_account_licences_endpoint', $plugin_licensing, 'display_licences' );
 	}
 
 	/**

@@ -13,6 +13,10 @@
  */
 class Ml_provisioning_Requests {
 
+	public function __construct(){
+		$this->options = get_option( 'ml__settings' );
+	}
+
 	/**
 	 * Get current user details from $wp_user object
 	 * @param string $arg
@@ -35,6 +39,9 @@ class Ml_provisioning_Requests {
 				break;
 			case 'id':
 				return $wp_user->ID;
+				break;
+			case 'login':
+				return $wp_user->user_login;
 				break;
 			case 'licenceuserid':
 				$ml_license_hub_id = get_user_meta( $wp_user->ID, 'ml_license_hub_id' );
@@ -87,20 +94,20 @@ class Ml_provisioning_Requests {
 	*/
 	private function do_request($args)
 	{
-		$options = get_option( 'ml__settings' );
+
 
 		$endpoint = $args['endpoint'] ?: false;
 		$query = $args['query'] ?: false;
 		$request = isset($args['request']) ? $args['request'] : 'GET';
-		$subdomain = isset($args['subdomain']) ? $options['ml__api_subdomain'] . '.': '';
+		$subdomain = isset($args['subdomain']) ? $this->options['ml__api_subdomain'] . '.': '';
 
 		if(!$endpoint || !$query) {
 			return "Sorry! You need a query string and an api endpoint";
 		}
 
 
-		$key = isset($args['subdomain']) ? $options['ml__subdomain_api_key'] : $options['ml__api_key'];
-		$base_url = $options['ml__api_base_url'];
+		$key = isset($args['subdomain']) ? $this->options['ml__subdomain_api_key'] : $this->options['ml__api_key'];
+		$base_url = $this->options['ml__api_base_url'];
 		$url = "http://{$subdomain}{$base_url}/{$endpoint}?{$query}";
 
 		$curl = curl_init();
@@ -154,19 +161,19 @@ class Ml_provisioning_Requests {
 		}
 	}
 
+
 	/**
 	 * Adds User to LicenceHub
 	 */
 	public function hub_create_user()
 	{
-		$options = get_option( 'ml__settings' );
 		$uuid_prefix = "mlt_";
 		$params= array(
 			'email' => $this->get_user('email'),
 			'firstname' => $this->get_user('firstname'),
 			'lastname' => $this->get_user('lastname'),
 			'userid' => $uuid_prefix.$this->get_user('id'),
-			'source' => $options['ml__api_source']
+			'source' => $this->options['ml__api_source']
 		);
 		$query = http_build_query( $params );
 
@@ -180,30 +187,35 @@ class Ml_provisioning_Requests {
 	}
 
 		/**
-	 * Adds courses to licensing hub
+	 * Get all licenses from licensing hub by user id
 	 * @param string $user_id user id from licensing hub
-	 * @param integer $order_id oocomerce order id
+	 * @param integer $order_id woocomerce order id
 	 */
-	public function hub_get_licences($user_id, $order_id)
+	public function hub_get_licences($user_id)
 	{
+		$query = http_build_query(
+			array(
+				'subdomain' => $this->options['ml__api_subdomain'],
+				'userid' => $user_id,
+			)
+		);
 		$raw_data = $this->do_request(
 			array(
 				'endpoint' => 'Licensing/getLicences',
 				'query' => $query,
 				)
 			);
-		$results[$product->id] = $raw_data;
+		return $raw_data->licences;
 	}
 		/**
 	 * Adds courses to licensing hub
 	 * @param string $user_id user id from licensing hub
-	 * @param integer $order_id oocomerce order id
+	 * @param integer $order_id woocomerce order id
 	 */
 	public function hub_add_licences($user_id, $order_id)
 	{
 		$order = wc_get_order( $order_id );
 		$items= $order->get_items();
-		$options = get_option( 'ml__settings' );
 		$sku;
 		$queries = array();
 		$results = array();
@@ -212,7 +224,7 @@ class Ml_provisioning_Requests {
 			$product = $item->get_product();
 			$sku = $product->get_sku();
 			$params= array(
-				'subdomain' => $options['ml__api_subdomain'],
+				'subdomain' => $this->options['ml__api_subdomain'],
 				'userid' => $user_id,
 				'sku' => $sku,
 				'life' => '31536000',
@@ -260,18 +272,23 @@ class Ml_provisioning_Requests {
 	}
 
 	/**
-	 * Create a newLMS Account
+	 * Create a new LMS Account
+	 * If A user is successfully created this will try to link the account
+	 * by calling $this->link_user_accounts()
 	 */
 	public function subdomain_create_user_account()
 	{
 
-		$user_name = false;
-		$user_pass = false;
-		$firstname =
-		$query = http_build_query([
-			'username' => $user_name,
-			'password' => $user_pass
-		]);
+		$user_pass = $this->generate_password();
+		$params= array(
+			'email' => $this->get_user('email'),
+			'firstname' => $this->get_user('firstname'),
+			'lastname' => $this->get_user('lastname'),
+			'username' => $this->get_user('login'),
+			'password' => $this->generate_password(),
+			'welcomeemail' => 1
+		);
+		$query = http_build_query($params);
 		$raw_data = $this->do_request(
 			array(
 				'endpoint' => 'User/createUser',
@@ -280,7 +297,12 @@ class Ml_provisioning_Requests {
 				'request' => 'POST'
 			)
 		);
-		return; // Do something with the raw data
+		if($raw_data->user){
+			$this->set_user_meta('lmsuserid', $raw_data->user->id);
+			return $this->link_user_accounts() ? true : false;
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -290,10 +312,9 @@ class Ml_provisioning_Requests {
 	 */
 	public function hub_is_account_linked()
 	{
-		$options = get_option( 'ml__settings' );
 		$query = http_build_query(
 			array(
-				'subdomain' => $options['ml__api_subdomain'],
+				'subdomain' => $this->options['ml__api_subdomain'],
 				'licenceuserid' => $this->get_user('licenceuserid')
 			)
 		);
@@ -313,10 +334,9 @@ class Ml_provisioning_Requests {
 	 */
 	public function link_user_accounts()
 	{
-		$options = get_option( 'ml__settings' );
 		$query = http_build_query(
 			array(
-				'subdomain' => $options['ml__api_subdomain'] ,
+				'subdomain' => $this->options['ml__api_subdomain'] ,
 				'licenceuserid' => $this->get_user('licenceuserid'),
 				'lmsuserid' => $this->get_user('lmsuserid')
 			)
@@ -326,7 +346,6 @@ class Ml_provisioning_Requests {
 				'endpoint' => 'Licensing/addLinkedAccount',
 				'query' => $query,
 				'request' => 'POST',
-				'subdomain' => true
 			)
 		);
 		return empty($raw_data->linkeduser) ? false : true;
@@ -339,7 +358,6 @@ class Ml_provisioning_Requests {
 	 */
 	public function subdomain_contains_wp_email()
 	{
-		$options = get_option( 'ml__settings' );
 		$query = http_build_query(
 			array(
 				'search' => $this->get_user('email')
@@ -353,7 +371,7 @@ class Ml_provisioning_Requests {
 			)
 		);
 		// If is single add subdomain id to wp user meta
-		$this->set_user_meta('lmsuserid', $raw_data->user->id);
+		if($raw_data->user) { $this->set_user_meta('lmsuserid', $raw_data->user->id); }
 		return empty($raw_data->user) ? false : true;
 	}
 	/**
@@ -363,7 +381,6 @@ class Ml_provisioning_Requests {
 	 */
 	public function lms_validate()
 	{
-		$options = get_option( 'ml__settings' );
 		$query = http_build_query(
 			array(
 				'search' => $this->get_user('email')
@@ -377,6 +394,23 @@ class Ml_provisioning_Requests {
 			)
 		);
 		return empty($raw_data->user) ? false : true;
+	}
+
+
+	private function generate_password()
+	{
+			$length = 16;
+			$keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+			$str = '';
+			$max = mb_strlen($keyspace, '8bit') - 1;
+			if ($max < 1) {
+					throw new Exception('$keyspace must be at least two characters long');
+			}
+			for ($i = 0; $i < $length; ++$i) {
+					$str .= $keyspace[random_int(0, $max)];
+			}
+			return $str;
 	}
 
 }

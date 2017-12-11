@@ -52,9 +52,9 @@
 	}
 
 	$(function() {
-		$('[data-form="validate-to-link"]').on( 'submit', function(event) {
+		$('[data-form="validate-to-link"], [data-form="lms-signup"]').on( 'submit', function(event) {
 			event.preventDefault();
-			clearFeedback($(this))
+			clearFeedback($(this));
 			handleSubmit($(this));
 		});
 	});

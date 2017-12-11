@@ -55,6 +55,9 @@
 				case 'validate-to-link':
 					return $this->process_validate_LMS_user();
 					break;
+				case 'lms-signup':
+					return $this->process_LMS_signup();
+					break;
 				default:
 					return null;
 					break;
@@ -81,6 +84,35 @@
 				if(true == $account_validated){
 					$this->link_validated_account();
 				}
+			}
+		}
+		/**
+		 * Validate signup form
+		 */
+		function process_validate_LMS_signup(){
+			$user_name = (isset($_POST['username']) && $_POST['username'] !== '') ?: false;
+			$user_pass = (isset($_POST['password']) && $_POST['password'] !== '') ?: false;
+			if(!$user_name || !$user_pass){
+				$this->response = array(
+					'status'  => 200,
+					'content' => array(
+						'state' => 'error',
+						'message' => 'Username or password missing',
+					)
+				);
+				$this->feedback();
+			} else {
+				$account_created =  $this->make_request->subdomain_create_user_account($_POST['username'], $_POST['password']);
+				if(true == $account_created){
+					$this->response = array(
+						'status'  => 200,
+						'content' => array(
+							'state' => 'account_created',
+							'message' => 'Account successfully Created',
+						)
+					);
+				}
+				$this->feedback();
 			}
 		}
 
@@ -118,6 +150,8 @@
 			wp_die( json_encode($this->response) );
 		}
 	}
+
+
 
 }
 

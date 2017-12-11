@@ -99,10 +99,4 @@ class Ml_license_Management {
 		}
 	}
 
-	public function hub_get_licenses()
-	{
-
-	}
-
-
 }
