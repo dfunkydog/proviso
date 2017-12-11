@@ -41,15 +41,15 @@
 				die( 'Permission Denied' );
 			}
 
-			$this->process_form($_POST['callback']);
+			$this->handle_form($_POST['callback']);
 
 		}
 
 		/**
-		 * Process form data. The actual process depands on the form callback
+		 * Process form data. The actual process depends on the form callback
 		 * variable taken from <code>$_POST['callback']</code>
 		 */
-		private function process_form($form)
+		private function handle_form($form)
 		{
 			switch ($form) {
 				case 'validate-to-link':
@@ -68,7 +68,13 @@
 			$user_name = (isset($_POST['username']) && $_POST['username'] !== '') ?: false;
 			$user_pass = (isset($_POST['password']) && $_POST['password'] !== '') ?: false;
 			if(!$user_name || !$user_pass){
-				$this->response =  ['error', 'message' => 'Username or Password missing'];
+				$this->response = array(
+					'status'  => 200,
+					'content' => array(
+						'state' => 'error',
+						'message' => 'Username or password missing',
+					)
+				);
 				$this->feedback();
 			} else {
 				$account_validated =  $this->make_request->subdomain_validate_user_account($_POST['username'], $_POST['password']);
@@ -77,8 +83,10 @@
 				}
 			}
 		}
+
 		/**
 		 * Link validate user accounts
+		 *
 		 */
 		function link_validated_account()
 		{
@@ -87,13 +95,26 @@
 					'status'  => 200,
 					'content' => array(
 						'state' => 'account_linked',
+						'message' => 'Account successfully Linked',
 					)
 				);
+			} else {
+					$this->response = array(
+						'status'  => 200,
+						'content' => array(
+							'state' => 'error',
+							'message' => 'There was a problem linking your account. Please contact our Admins',
+						)
+					);
 			}
 			$this->feedback();
 		}
 
-		function feedback(){
+		/**
+		 * Terminates and returns xhr response
+		 */
+		function feedback()
+		{
 			wp_die( json_encode($this->response) );
 		}
 	}

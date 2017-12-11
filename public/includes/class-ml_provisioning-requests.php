@@ -3,32 +3,15 @@
 /**
  * Raw request to licensing api.
  *
+ * makes the requests to licensing api
+ *
  * @link       nlsltd.com
  * @since      1.0.0
  *
- * @package    Ml_provisioning
- * @subpackage Ml_provisioning/includes
- */
-
-/**
- * Raw request to licensing api.
- *
- * makes the requests to licensing api
- *
- * @package    Ml_provisioning
- * @subpackage Ml_provisioning/includes
+ * @package    Ml_provisioning\public\includes
  * @author     Michael Dyer <devteam@nlsltd.com>
  */
 class Ml_provisioning_Requests {
-	/**
-	* Make the request to licensing api
-	*
-	* @param string $endpoint The target api endpoint path, does not expect
-	* the ful url
-	* @param string $query The query string
-	*
-	* @since    1.0.0
-	*/
 
 	/**
 	 * Get current user details from $wp_user object
@@ -94,7 +77,14 @@ class Ml_provisioning_Requests {
 		}
 
 	}
-
+	/**
+	* Make the request to licensing api
+	*
+	* @param string $endpoint The target api endpoint path
+	* @param string $query The query string
+	* @return object
+	* @since    1.0.0
+	*/
 	private function do_request($args)
 	{
 		$options = get_option( 'ml__settings' );
@@ -141,6 +131,9 @@ class Ml_provisioning_Requests {
 		}
 	}
 
+	/**
+	 * Gets User data from licenceHub
+	 */
 	public function hub_get_user()
 	{
 		$query = http_build_query([
@@ -191,6 +184,21 @@ class Ml_provisioning_Requests {
 	 * @param string $user_id user id from licensing hub
 	 * @param integer $order_id oocomerce order id
 	 */
+	public function hub_get_licences($user_id, $order_id)
+	{
+		$raw_data = $this->do_request(
+			array(
+				'endpoint' => 'Licensing/getLicences',
+				'query' => $query,
+				)
+			);
+		$results[$product->id] = $raw_data;
+	}
+		/**
+	 * Adds courses to licensing hub
+	 * @param string $user_id user id from licensing hub
+	 * @param integer $order_id oocomerce order id
+	 */
 	public function hub_add_licences($user_id, $order_id)
 	{
 		$order = wc_get_order( $order_id );
@@ -230,7 +238,7 @@ class Ml_provisioning_Requests {
 	 */
 	public function subdomain_validate_user_account($name, $pass)
 	{
-		return '4JXQOON7Y5C4X3R75U0E';
+		return '0YH5H19SVACKQ6COYAXA';
 		$user_name = isset($name) ? $name : $false;
 		$user_pass = isset($pass) ? $pass : $false;
 		if(!$user_name || !$user_pass){
@@ -252,7 +260,7 @@ class Ml_provisioning_Requests {
 	}
 
 	/**
-	 * Create LMS Account
+	 * Create a newLMS Account
 	 */
 	public function subdomain_create_user_account()
 	{
@@ -308,7 +316,7 @@ class Ml_provisioning_Requests {
 		$options = get_option( 'ml__settings' );
 		$query = http_build_query(
 			array(
-				'subdomain' => $options['ml__api_subdomain'],
+				'subdomain' => $options['ml__api_subdomain'] ,
 				'licenceuserid' => $this->get_user('licenceuserid'),
 				'lmsuserid' => $this->get_user('lmsuserid')
 			)
@@ -318,6 +326,7 @@ class Ml_provisioning_Requests {
 				'endpoint' => 'Licensing/addLinkedAccount',
 				'query' => $query,
 				'request' => 'POST',
+				'subdomain' => true
 			)
 		);
 		return empty($raw_data->linkeduser) ? false : true;
@@ -344,7 +353,7 @@ class Ml_provisioning_Requests {
 			)
 		);
 		// If is single add subdomain id to wp user meta
-		$this->set_user_meta(lmsuserid, $raw_data->user->id);
+		$this->set_user_meta('lmsuserid', $raw_data->user->id);
 		return empty($raw_data->user) ? false : true;
 	}
 	/**

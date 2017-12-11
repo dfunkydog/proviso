@@ -188,7 +188,8 @@ class Ml_provisioning {
 		$this->loader->add_action( 'woocommerce_checkout_create_order', $plugin_public, 'checkout_create_order' );
 		$this->loader->add_action( 'woocommerce_thankyou', $plugin_public, 'post_checkout_provisioning' );
 		$this->loader->add_filter( 'woocommerce_account_menu_items', $plugin_public, 'account_menu_items' );
-		$this->loader->add_shortcode( 'ml_povisioning_validate_to_link', $plugin_public, 'ml_povisioning_validate_to_link' );
+		$this->loader->add_shortcode( 'ml_provisioning_validate_account', $plugin_public, 'ml_provisioning_validate_to_link' );
+		$this->loader->add_shortcode( 'ml_provisioning_thankyou_cta', $plugin_public, 'ml_provisioning_thankyou_cta' );
 
 		/**
 		 * AJAX

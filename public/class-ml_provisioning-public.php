@@ -123,8 +123,7 @@ class Ml_provisioning_Public {
 	 */
 	public function licences_endpoint_content()
 	{
-		$this->get_licenses();
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_licence_management.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_license_management.php';
 	}
 
 	public function account_menu_items($items)
@@ -234,18 +233,24 @@ class Ml_provisioning_Public {
 			echo " E";
 		} else {
 			if( $this->make_request->subdomain_contains_wp_email() ) {
-				$this->show_lms_login_form();
+				$this->ml_provisioning_validate_to_link();
 			}
 		}
 	}
 
-
-	public function show_lms_login_form(){
+	public function ml_provisioning_validate_to_link()
+	{
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_validate-to-link.php';
 	}
-	public function ml_povisioning_validate_to_link(){
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/ml_validate-to-link.php';
 
+	public function ml_provisioning_thankyou_cta($atts)
+	{
+		$licenses_url = get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'licences';
+		if('' !== wc_get_order($atts['order'])->get_meta('allocate')) {
+			return  "<a href={$licenses_url} class='button -lime'>Login to training</a>";
+		} else {
+			return "<a href={$licenses_url} class='button -lime'>Manage Licenses</a>";}
 	}
 
 }
+
